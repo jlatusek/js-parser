@@ -1,6 +1,7 @@
-use std::env;
-use std::path;
+use std::{env, fs, path};
 use walkdir::WalkDir;
+use tree_sitter::{InputEdit, Language, Parser, Point};
+
 
 pub mod file_search;
 
@@ -17,6 +18,27 @@ fn list_files(directory: &str) -> Vec<path::PathBuf> {
         .collect()
 }
 
+fn parse_file(path: &path::PathBuf) {
+    let mut parser = Parser::new();
+    parser.set_language(&tree_sitter_javascript::LANGUAGE.into())
+        .expect("Error loading JavaScript grammar");
+    let source = fs::read_to_string(&path).expect("Cannot read file :((");
+
+    let tree = parser.parse(source, None).unwrap();
+    let root_node = tree.root_node();
+    println!("xx {}", root_node.kind());
+    let mut cursor = root_node.walk();
+    for child in root_node.children(&mut cursor) {
+        println!(
+            " - child: kind={} range={:?}",
+            child.kind(),
+            child.range()
+        );
+    }
+
+
+}
+
 fn main() {
     let paths = list_files(
         env::args()
@@ -27,5 +49,6 @@ fn main() {
     );
     for path in paths {
         println!("{}", path.display());
+        parse_file(&path);
     }
 }
