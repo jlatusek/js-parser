@@ -46,7 +46,6 @@ impl JSParser {
         let source = fs::read_to_string(&path).expect("Cannot read file :((");
         let tree = self.parser.parse(&source, None).unwrap();
         let root_node = tree.root_node();
-        println!("xx {}", root_node.kind());
         let mut cursor = root_node.walk();
         for child in root_node.named_children(&mut cursor) {
             // TODO: replace string compassion with kind_id
