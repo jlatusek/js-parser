@@ -1,2 +1,2 @@
-pub mod js_file;
+pub mod dir_scanner;
 pub mod parser;

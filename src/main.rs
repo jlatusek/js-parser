@@ -1,12 +1,13 @@
 use crate::parser::JSFunction;
+use dir_scanner::list_files;
 use serde_json;
 use std::env;
 
-pub mod js_file;
+pub mod dir_scanner;
 pub mod parser;
 
 fn main() {
-    let paths = js_file::list_files(
+    let paths = list_files(
         env::args()
             .skip(1)
             .next()

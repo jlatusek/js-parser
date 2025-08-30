@@ -1,4 +1,4 @@
-use js_parser::js_file::*;
+use js_parser::dir_scanner::*;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
