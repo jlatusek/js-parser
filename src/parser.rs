@@ -1,9 +1,7 @@
 use serde::{Deserialize, Serialize};
-use std::fmt::format;
+use std::fs;
 use std::path::PathBuf;
-use std::str::FromStr;
-use std::{fmt, fs, string};
-use tree_sitter::{InputEdit, Language, Parser, Point};
+use tree_sitter::Parser;
 
 pub struct JSParser {
     parser: Parser,
