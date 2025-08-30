@@ -4,7 +4,6 @@ use std::env;
 
 pub mod js_file;
 pub mod parser;
-pub mod to_json;
 
 fn main() {
     let paths = js_file::list_files(
