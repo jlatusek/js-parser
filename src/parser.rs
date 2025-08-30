@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::fmt::format;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -8,13 +9,29 @@ pub struct JSParser {
     parser: Parser,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct SerPoint {
+    pub row: usize,
+    pub column: usize,
+}
+
+impl From<tree_sitter::Point> for SerPoint {
+    fn from(p: tree_sitter::Point) -> Self {
+        SerPoint {
+            row: p.row,
+            column: p.column,
+        }
+    }
+}
+
 // TODO: difference between String and string!!!
+#[derive(Serialize, Deserialize, Debug)]
 pub struct JSFunction {
     pub identifier: String,
     pub name: String,
-    pub path: PathBuf,
-    pub start: Point,
-    pub end: Point,
+    pub path: String,
+    pub start: SerPoint,
+    pub end: SerPoint,
 }
 
 impl JSParser {
@@ -45,9 +62,9 @@ impl JSParser {
                     identifier: format!("{}:{}", path.display(), child.start_position().row + 1,),
                     name: String::from(gname),
                     // TODO: do we really need clone here?
-                    path: path.clone(),
-                    start: child.start_position(),
-                    end: child.end_position(),
+                    path: path.display().to_string(),
+                    start: child.start_position().into(),
+                    end: child.end_position().into(),
                 })
             };
         }
