@@ -1,4 +1,4 @@
-use crate::parser::JSFunction;
+use crate::parser::JFunction;
 use dir_scanner::list_files;
 use serde_json;
 use std::env;
@@ -14,13 +14,13 @@ fn main() {
 
     let paths = list_files(directory, "js");
 
-    let mut parser = parser::JSParser::new().unwrap_or_else(|e| {
+    let mut parser = parser::JParser::new().unwrap_or_else(|e| {
         eprintln!("Error creating parser: {}", e);
         std::process::exit(1);
     });
 
     // TODO: Add parallel processing of JS files
-    let js_functions: Vec<JSFunction> = paths
+    let js_functions: Vec<JFunction> = paths
         .into_iter()
         .flat_map(|path| match parser.parse_file(&path) {
             Ok(functions) => Some(functions),

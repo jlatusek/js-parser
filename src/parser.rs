@@ -34,7 +34,7 @@ impl From<tree_sitter::Point> for SerPoint {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct JSFunction {
+pub struct JFunction {
     pub identifier: String,
     pub name: String,
     pub path: String,
@@ -42,13 +42,13 @@ pub struct JSFunction {
     pub end: SerPoint,
 }
 
-pub struct JSParser {
+pub struct JParser {
     parser: Parser,
     function_kind_id: u16,
     name_field_id: u16,
 }
 
-impl JSParser {
+impl JParser {
     pub fn new() -> Result<Self> {
         let mut parser = Parser::new();
         let language = &tree_sitter_javascript::LANGUAGE.into();
@@ -68,8 +68,7 @@ impl JSParser {
         })
     }
 
-    pub fn parse_file(&mut self, path: &PathBuf) -> Result<Vec<JSFunction>> {
-        let mut js_functions: Vec<JSFunction> = Vec::new();
+    pub fn parse_file(&mut self, path: &PathBuf) -> Result<Vec<JFunction>> {
         let source = fs::read_to_string(&path)?;
 
         let tree = self
@@ -79,12 +78,13 @@ impl JSParser {
         let root_node = tree.root_node();
 
         let mut cursor = root_node.walk();
-        js_functions.extend(
+        let js_functions: Vec<JFunction> = {
             root_node
                 .named_children(&mut cursor)
                 .filter(|child| child.kind_id() == self.function_kind_id)
-                .filter_map(|child| self.create_js_function(&child, &source, path)),
-        );
+                .filter_map(|child| self.create_js_function(&child, &source, path))
+                .collect()
+        };
         Ok(js_functions)
     }
 
@@ -93,10 +93,10 @@ impl JSParser {
         node: &tree_sitter::Node,
         source: &str,
         path: &PathBuf,
-    ) -> Option<JSFunction> {
-        let name = self.extract_function_name(node, source)?;
+    ) -> Option<JFunction> {
+        let name = self.get_function_name(node, source)?;
 
-        Some(JSFunction {
+        Some(JFunction {
             identifier: format!("{}:{}", path.display(), node.start_position().row + 1),
             name,
             path: path.display().to_string(),
@@ -105,7 +105,7 @@ impl JSParser {
         })
     }
 
-    fn extract_function_name(&self, node: &tree_sitter::Node, source: &str) -> Option<String> {
+    fn get_function_name(&self, node: &tree_sitter::Node, source: &str) -> Option<String> {
         if let Some(ident) = node.child_by_field_id(self.name_field_id) {
             return ident
                 .utf8_text(source.as_bytes())
