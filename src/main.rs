@@ -14,12 +14,22 @@ fn main() {
 
     let paths = list_files(directory, "js");
 
-    let mut parser = parser::JSParser::new();
+    let mut parser = parser::JSParser::new().unwrap_or_else(|e| {
+        eprintln!("Error creating parser: {}", e);
+        std::process::exit(1);
+    });
 
     // TODO: Add parallel processing of JS files
     let js_functions: Vec<JSFunction> = paths
         .into_iter()
-        .flat_map(|path| parser.parse_file(&path))
+        .flat_map(|path| match parser.parse_file(&path) {
+            Ok(functions) => Some(functions),
+            Err(e) => {
+                eprintln!("Error parsing file {}: {}", path.display(), e);
+                None
+            }
+        })
+        .flatten()
         .collect();
 
     let json = serde_json::to_string_pretty(&js_functions).unwrap_or_else(|e| {
