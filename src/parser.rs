@@ -12,6 +12,8 @@ pub enum ParseError {
     TreeSitter(String),
     #[error("Failed to set language")]
     LanguageSetup,
+    #[error("Language field '{0}' not found")]
+    FieldNotFound(String),
 }
 
 pub type Result<T> = std::result::Result<T, ParseError>;
@@ -55,9 +57,9 @@ impl JSParser {
             .map_err(|_| ParseError::LanguageSetup)?;
 
         let function_kind_id = language.id_for_node_kind("function_declaration", true);
-        let name_field_id = language.field_id_for_name("name").ok_or_else(|| {
-            ParseError::TreeSitter("Field 'name' not found in language".to_string())
-        })?;
+        let name_field_id = language
+            .field_id_for_name("name")
+            .ok_or_else(|| ParseError::FieldNotFound("name".to_string()))?;
 
         Ok(Self {
             parser,
