@@ -42,12 +42,20 @@ fn write_js_hello(path: &Path) {
 fn test_list_files() {
     let (td, mut expected_files) = create_js_tree();
     expected_files.sort();
-    let mut found_files = list_files(
-        td.path()
-            .as_os_str()
-            .to_str()
-            .expect("Cannot change tmpdir to string"),
-    );
+    let mut found_files = list_files(td.path(), "js");
     found_files.sort();
     assert!(expected_files == found_files);
+}
+
+#[test]
+fn test_list_files_basic() {
+    let temp_dir = TempDir::new().unwrap();
+    let temp_path = temp_dir.path();
+
+    fs::write(temp_path.join("test1.js"), "").unwrap();
+    fs::write(temp_path.join("test2.txt"), "").unwrap();
+    fs::write(temp_path.join("test3.JS"), "").unwrap();
+
+    let js_files = list_files(temp_path, "js");
+    assert_eq!(js_files.len(), 2);
 }
