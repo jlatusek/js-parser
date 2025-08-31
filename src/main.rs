@@ -14,10 +14,12 @@ fn main() {
 
     let paths = list_files(directory, "js");
 
+    let mut parser = parser::JSParser::new();
+
     // TODO: Add parallel processing of JS files
     let js_functions: Vec<JSFunction> = paths
         .into_iter()
-        .flat_map(|path| parser::JSParser::new().parse_file(&path))
+        .flat_map(|path| parser.parse_file(&path))
         .collect();
 
     let json = serde_json::to_string_pretty(&js_functions).unwrap_or_else(|e| {
