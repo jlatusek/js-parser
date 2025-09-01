@@ -1,7 +1,5 @@
 use js_parser::dir_scanner::list_files;
-use js_parser::parser::{JFunction, JParser};
-use std::collections::HashSet;
-use std::path::PathBuf;
+use js_parser::parser::JParser;
 
 #[test]
 fn test_parse_all_js_files_in_test_input() {
