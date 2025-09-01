@@ -14,9 +14,11 @@ fn test_parse_all_js_files_in_test_input() {
         "processData",
         "main",
     ];
-    let js_files = list_files(test_input_dir, "js");
+    let mut js_files = list_files(test_input_dir, "js");
 
     let mut parser = JParser::new().expect("Failed to create parser");
+    js_files.sort();
+
     for (i, file) in js_files.into_iter().enumerate() {
         let mut functions: Vec<String> = parser
             .parse_file(&file)
