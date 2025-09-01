@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::PathBuf;
 use thiserror::Error;
@@ -46,6 +47,7 @@ pub struct JParser {
     parser: Parser,
     function_kind_id: u16,
     name_field_id: u16,
+    hasher: Sha256,
 }
 
 impl JParser {
@@ -65,6 +67,7 @@ impl JParser {
             parser,
             function_kind_id,
             name_field_id: name_field_id.into(),
+            hasher: Sha256::new(),
         })
     }
 
@@ -78,31 +81,48 @@ impl JParser {
         let root_node = tree.root_node();
 
         let mut cursor = root_node.walk();
-        let js_functions: Vec<JFunction> = {
-            root_node
-                .named_children(&mut cursor)
-                .filter(|child| child.kind_id() == self.function_kind_id)
-                .filter_map(|child| self.create_js_function(&child, &source, path))
-                .collect()
-        };
+
+        let mut js_functions = Vec::new();
+
+        for child in root_node.named_children(&mut cursor) {
+            if child.kind_id() == self.function_kind_id {
+                if let Some(function) = self.create_js_function(&child, &source, path) {
+                    js_functions.push(function);
+                }
+            }
+        }
+
         Ok(js_functions)
     }
 
     fn create_js_function(
-        &self,
+        &mut self,
         node: &tree_sitter::Node,
         source: &str,
         path: &PathBuf,
     ) -> Option<JFunction> {
         let name = self.get_function_name(node, source)?;
 
+        let hash = self.generate_source_hash(node, &source)?;
+        let identifier = format!("{}::{}::{}", path.display(), name, hash);
+
         Some(JFunction {
-            identifier: format!("{}:{}", path.display(), node.start_position().row + 1),
+            identifier,
             name,
             path: path.display().to_string(),
             start: node.start_position().into(),
             end: node.end_position().into(),
         })
+    }
+
+    fn generate_source_hash(&mut self, node: &tree_sitter::Node, source: &str) -> Option<String> {
+        let function_content = node.utf8_text(source.as_bytes()).ok()?;
+
+        // Reset and reuse the existing hasher
+        self.hasher.reset();
+        self.hasher.update(function_content.as_bytes());
+        let hash_result = self.hasher.finalize_reset();
+        Some(format!("{:x}", hash_result).to_string())
     }
 
     fn get_function_name(&self, node: &tree_sitter::Node, source: &str) -> Option<String> {
